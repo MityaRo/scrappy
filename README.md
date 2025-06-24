@@ -14,3 +14,11 @@ Generated files are saved to the `output` directory:
 
 - `{APP_NAME}-appstore-reviews.txt` - Text format for easy searching and reading
 - `{APP_NAME}-appstore-reviews.json` - JSON format for data processing
+
+## Running Tests
+
+To run backend API tests:
+
+```
+npm test
+```
