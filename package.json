@@ -1,0 +1,15 @@
+{
+    "name": "appstore-reviews-collector",
+    "version": "1.0.0",
+    "description": "Pulls AppStore reviews for a specified number of pages for a specifiec appId",
+    "main": "index.js",
+    "scripts": {
+      "start": "node index.js",
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Dmytro Roshchupkin",
+    "license": "ISC",
+    "dependencies": {
+      "app-store-scraper": "^0.18.0"
+    }
+  }
