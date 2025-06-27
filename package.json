@@ -8,7 +8,7 @@
   "author": "Dmytro Roshchupkin",
   "license": "ISC",
   "dependencies": {
-    "app-store-scraper": "^0.18.0",
+    "app-store-scraper": "^0.18.0"
   },
   "devDependencies": {
     "@types/jest": "^29.0.0",
