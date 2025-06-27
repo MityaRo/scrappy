@@ -1,24 +1,49 @@
-# Scrappy
+# Scrappy Monorepo
 
-Scraps AppStore reviews for a specified app by AppId
+This project is organized as a monorepo using [pnpm workspaces](https://pnpm.io/workspaces), with separate packages for the frontend and backend (API).
 
-To run, make sure Node.js is installed, then run:
-
-```
-npm i && npm start
-```
-
-This project uses TypeScript. The entry point is `index.ts`.
-
-Generated files are saved to the `output` directory:
-
-- `{APP_NAME}-appstore-reviews.txt` - Text format for easy searching and reading
-- `{APP_NAME}-appstore-reviews.json` - JSON format for data processing
-
-## Running Tests
-
-To run backend API tests:
+## Structure
 
 ```
-npm test
+/ (root)
+  pnpm-workspace.yaml
+  /frontend    # Frontend app (Vite/React)
+  /api         # Backend serverless API (Vercel)
 ```
+
+## Getting Started
+
+### Prerequisites
+
+- [pnpm](https://pnpm.io/installation) (recommended)
+
+### Install dependencies
+
+From the root directory:
+
+```sh
+pnpm install
+```
+
+### Working with packages
+
+- **Frontend:**
+  ```sh
+  cd frontend
+  pnpm dev
+  ```
+- **API (serverless backend):**
+  Deploy `/api` to Vercel or run locally with your preferred serverless emulator.
+
+### Running Tests
+
+From the root or within a package:
+
+```sh
+pnpm test
+```
+
+## Notes
+
+- Each package (`frontend`, `api`) has its own `package.json` and dependencies.
+- Use `pnpm` for all install and run commands to ensure workspace compatibility.
