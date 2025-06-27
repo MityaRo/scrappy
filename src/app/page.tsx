@@ -6,7 +6,10 @@ export default function Home() {
   const [appName, setAppName] = useState("")
   const [appId, setAppId] = useState("")
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<{
+    results?: unknown
+    error?: string
+  } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Trigger request as soon as both fields are filled
@@ -37,8 +40,8 @@ export default function Home() {
         if (!res.ok) throw new Error("Failed to fetch reviews")
         const data = await res.json()
         setResult(data)
-      } catch (err: any) {
-        setError(err.message || "Unknown error")
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error")
       } finally {
         setLoading(false)
       }
