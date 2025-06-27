@@ -2,17 +2,21 @@
   "name": "Scrappy",
   "version": "0.1.0",
   "description": "Pulls AppStore reviews for a specified number of pages for a specifiec appId",
-  "main": "index.js",
   "scripts": {
-    "start": "ts-node index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "Dmytro Roshchupkin",
   "license": "ISC",
   "dependencies": {
-    "app-store-scraper": "^0.18.0"
+    "app-store-scraper": "^0.18.0",
   },
   "devDependencies": {
+    "@types/jest": "^29.0.0",
+    "@types/supertest": "^2.0.12",
+    "@vercel/node": "^5.3.0",
+    "jest": "^29.0.0",
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.0.0",
     "ts-node": "^10.0.0",
     "typescript": "^5.0.0"
   }
