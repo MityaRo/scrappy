@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node"
+import { NextRequest, NextResponse } from "next/server"
 // @ts-expect-error: No type definitions for 'app-store-scraper'
 import store from "app-store-scraper"
 
@@ -37,39 +37,36 @@ async function collectReviewsForApp(
   return { appName, appId, reviews: results }
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export async function POST(req: NextRequest) {
   const defaultPagesCount = 10
-
-  if (req.method !== "POST") {
-    res.status(405).json({ error: "Method not allowed" })
-    return
-  }
-
-  const { apps, pagesCount } = req.body as {
-    apps: AppInput[]
-    pagesCount?: number
-  }
-
-  if (!Array.isArray(apps)) {
-    res
-      .status(400)
-      .json({ error: "Invalid request body: apps must be an array" })
-    return
-  }
-
-  const count =
-    typeof pagesCount === "number" && pagesCount > 0
-      ? pagesCount
-      : defaultPagesCount
-
   try {
+    const body = await req.json()
+    const { apps, pagesCount } = body as {
+      apps: AppInput[]
+      pagesCount?: number
+    }
+
+    if (!Array.isArray(apps)) {
+      return NextResponse.json(
+        { error: "Invalid request body: apps must be an array" },
+        { status: 400 }
+      )
+    }
+
+    const count =
+      typeof pagesCount === "number" && pagesCount > 0
+        ? pagesCount
+        : defaultPagesCount
+
     const allResults = await Promise.all(
       apps.map(app => collectReviewsForApp(app.appId, app.appName, count))
     )
 
-    res.setHeader("Content-Type", "application/json")
-    res.status(200).json({ results: allResults })
+    return NextResponse.json({ results: allResults })
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch reviews", details: err })
+    return NextResponse.json(
+      { error: "Failed to fetch reviews", details: err },
+      { status: 500 }
+    )
   }
 }
