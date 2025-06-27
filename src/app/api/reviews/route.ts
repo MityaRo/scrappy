@@ -38,7 +38,9 @@ async function collectReviewsForApp(
 }
 
 export async function POST(req: NextRequest) {
+  // there are 50 reviews per page
   const defaultPagesCount = 10
+
   try {
     const body = await req.json()
     const { apps, pagesCount } = body as {
