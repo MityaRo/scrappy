@@ -7,21 +7,24 @@ export default function Home() {
   const [appId, setAppId] = useState("")
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{
-    results?: unknown
+    results?: Array<{ appName: string; appId: string; reviews: unknown[] }>
     error?: string
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Trigger request as soon as both fields are filled
   async function handleInputChange(name: string, value: string) {
+    const newAppName = name === "appName" ? value : appName
+    const newAppId = name === "appId" ? value : appId
+
     if (name === "appName") setAppName(value)
     if (name === "appId") setAppId(value)
+
     setError(null)
     setResult(null)
-    if (
-      (name === "appName" ? value : appName) &&
-      (name === "appId" ? value : appId)
-    ) {
+
+    // Only proceed if both fields have meaningful values
+    if (newAppName.trim() && newAppId.trim()) {
       setLoading(true)
       try {
         const res = await fetch("/api/reviews", {
@@ -30,8 +33,8 @@ export default function Home() {
           body: JSON.stringify({
             apps: [
               {
-                appName: name === "appName" ? value : appName,
-                appId: name === "appId" ? value : appId
+                appName: newAppName,
+                appId: newAppId
               }
             ],
             pagesCount: 1
@@ -45,6 +48,50 @@ export default function Home() {
       } finally {
         setLoading(false)
       }
+    }
+  }
+
+  function downloadResults() {
+    if (!result) return
+
+    try {
+      const dataStr = JSON.stringify(result, null, 2)
+      const dataBlob = new Blob([dataStr], { type: "application/json" })
+      const url = URL.createObjectURL(dataBlob)
+
+      const link = document.createElement("a")
+      link.href = url
+      link.style.display = "none"
+
+      // Get appName and appId from the result or current state
+      const resultsArray = Array.isArray(result.results) ? result.results : []
+      const firstResult = resultsArray[0]
+      const resultAppName = firstResult?.appName || appName
+      const resultAppId = firstResult?.appId || appId
+
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-")
+      const sanitizedAppName = (resultAppName || "").replace(
+        /[^a-zA-Z0-9]/g,
+        "_"
+      )
+      const sanitizedAppId = (resultAppId || "").replace(/[^a-zA-Z0-9]/g, "_")
+
+      const filename =
+        sanitizedAppName && sanitizedAppId
+          ? `reviews-${sanitizedAppName}-${sanitizedAppId}.json`
+          : `reviews-${timestamp}.json`
+
+      link.setAttribute("download", filename)
+
+      document.body.appendChild(link)
+      link.click()
+
+      setTimeout(() => {
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+      }, 100)
+    } catch {
+      setError("Failed to download file")
     }
   }
 
@@ -71,7 +118,15 @@ export default function Home() {
       {error && <div className="text-red-500">Error: {error}</div>}
       {result && (
         <div className="w-full max-w-2xl mt-4">
-          <h2 className="font-semibold mb-2">Results:</h2>
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="font-semibold">Results:</h2>
+            <button
+              onClick={downloadResults}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              Download JSON
+            </button>
+          </div>
           <pre className="bg-gray-100 p-2 rounded overflow-x-auto text-xs text-gray-900">
             {JSON.stringify(result, null, 2)}
           </pre>
