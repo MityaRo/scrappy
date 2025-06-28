@@ -72,7 +72,7 @@ export default function Home() {
       {result && (
         <div className="w-full max-w-2xl mt-4">
           <h2 className="font-semibold mb-2">Results:</h2>
-          <pre className="bg-gray-100 p-2 rounded overflow-x-auto text-xs">
+          <pre className="bg-gray-100 p-2 rounded overflow-x-auto text-xs text-gray-900">
             {JSON.stringify(result, null, 2)}
           </pre>
         </div>
