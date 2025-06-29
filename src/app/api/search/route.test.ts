@@ -7,16 +7,14 @@ import type { NextRequest } from "next/server"
 jest.mock("app-store-scraper", () => ({
   __esModule: true,
   default: {
-    search: jest
-      .fn()
-      .mockResolvedValue([
-        {
-          id: 123,
-          appId: "com.example.app",
-          title: "Test App",
-          developer: "Dev"
-        }
-      ])
+    search: jest.fn().mockResolvedValue([
+      {
+        id: 123,
+        appId: "com.example.app",
+        title: "Test App",
+        developer: "Dev"
+      }
+    ])
   }
 }))
 
