@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useDebouncedCallback } from "use-debounce"
 import type { Review } from "app-store-scraper"
+import ReviewCard from "./components/ReviewCard"
 
 const REVIEWS_PER_PAGE = 50
 
@@ -120,6 +121,17 @@ export default function Home() {
     }
   }, [])
 
+  function clearSelectedApp() {
+    setSelectedApp(null)
+    setAppId("")
+    setResult(null)
+    setError(null)
+  }
+
+  function shouldTriggerSearch(value: string) {
+    return value.length >= 3
+  }
+
   async function handleSearchChange(value: string) {
     setSearchTerm(value)
 
@@ -133,13 +145,10 @@ export default function Home() {
 
     // If value doesn't match selected app, clear the selection
     if (selectedApp && value !== selectedApp.appName) {
-      setSelectedApp(null)
-      setAppId("")
-      setResult(null)
-      setError(null)
+      clearSelectedApp()
     }
 
-    if (value.length >= 3) {
+    if (shouldTriggerSearch(value)) {
       debouncedSearch(value)
     } else {
       setSearchResults([])
@@ -199,31 +208,47 @@ export default function Home() {
     }
   }
 
+  function handleArrowDown() {
+    setHighlightedIndex(idx => (idx + 1) % searchResults.length)
+  }
+
+  function handleArrowUp() {
+    setHighlightedIndex(
+      idx => (idx - 1 + searchResults.length) % searchResults.length
+    )
+  }
+
+  function handleEnter() {
+    if (highlightedIndex >= 0 && highlightedIndex < searchResults.length) {
+      const app = searchResults[highlightedIndex]
+      setSelectedApp(app)
+      setSearchTerm(app.appName)
+      setAppId(app.appId)
+      setShowDropdown(false)
+      setSearchResults([])
+      setResult(null)
+      setError(null)
+      setHighlightedIndex(-1)
+    }
+  }
+
+  function handleEscape() {
+    setShowDropdown(false)
+    setHighlightedIndex(-1)
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (!showDropdown || searchResults.length === 0) return
     if (e.key === "ArrowDown") {
       e.preventDefault()
-      setHighlightedIndex(idx => (idx + 1) % searchResults.length)
+      handleArrowDown()
     } else if (e.key === "ArrowUp") {
       e.preventDefault()
-      setHighlightedIndex(
-        idx => (idx - 1 + searchResults.length) % searchResults.length
-      )
+      handleArrowUp()
     } else if (e.key === "Enter") {
-      if (highlightedIndex >= 0 && highlightedIndex < searchResults.length) {
-        const app = searchResults[highlightedIndex]
-        setSelectedApp(app)
-        setSearchTerm(app.appName)
-        setAppId(app.appId)
-        setShowDropdown(false)
-        setSearchResults([])
-        setResult(null)
-        setError(null)
-        setHighlightedIndex(-1)
-      }
+      handleEnter()
     } else if (e.key === "Escape") {
-      setShowDropdown(false)
-      setHighlightedIndex(-1)
+      handleEscape()
     }
   }
 
@@ -232,6 +257,18 @@ export default function Home() {
     if (showDropdown) setHighlightedIndex(0)
     else setHighlightedIndex(-1)
   }, [showDropdown, searchResults])
+
+  function sortReviews(reviews: Review[]): Review[] {
+    return [...reviews].sort((a, b) => {
+      if (a.version !== b.version) {
+        return b.version.localeCompare(a.version, undefined, {
+          numeric: true,
+          sensitivity: "base"
+        })
+      }
+      return new Date(b.updated).getTime() - new Date(a.updated).getTime()
+    })
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-8 gap-8">
@@ -312,21 +349,7 @@ export default function Home() {
         Array.isArray(result.reviews) &&
         result.reviews.length > 0 &&
         (() => {
-          // Sort reviews by version (desc), then date (desc) ONCE
-          const sortedReviews = [...(result.reviews as Review[])]
-          sortedReviews.sort((a, b) => {
-            if ((a as Review).version !== (b as Review).version) {
-              return (b as Review).version.localeCompare(
-                (a as Review).version,
-                undefined,
-                { numeric: true, sensitivity: "base" }
-              )
-            }
-            return (
-              new Date((b as Review).updated).getTime() -
-              new Date((a as Review).updated).getTime()
-            )
-          })
+          const sortedReviews = sortReviews(result.reviews as Review[])
 
           // Get first review date for heading
           const firstReview = sortedReviews[sortedReviews.length - 1]
@@ -357,48 +380,10 @@ export default function Home() {
               </div>
               <div className="flex flex-col gap-4">
                 {sortedReviews.map((review, idx) => (
-                  <div
+                  <ReviewCard
+                    review={review}
                     key={`${review.id}-${review.updated}-${idx}`}
-                    className="bg-gray-900 border border-gray-700 rounded p-4 text-gray-100"
-                  >
-                    <div className="flex flex-wrap gap-4 items-center mb-2">
-                      <span className="font-bold text-blue-400">
-                        v{review.version}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        {Array.from({ length: 5 }).map((_, i) => {
-                          let color = "text-gray-700"
-                          if (review.score >= 5) color = "text-yellow-400"
-                          else if (review.score === 4) color = "text-orange-400"
-                          else if (review.score === 3) color = "text-yellow-300"
-                          else if (review.score === 2) color = "text-gray-400"
-                          else if (review.score === 1) color = "text-gray-600"
-                          return (
-                            <span
-                              key={i}
-                              className={
-                                i < review.score ? color : "text-gray-800"
-                              }
-                            >
-                              ★
-                            </span>
-                          )
-                        })}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {new Date(review.updated).toLocaleDateString()}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        by {review.userName}
-                      </span>
-                    </div>
-                    <div className="font-semibold text-lg mb-1">
-                      {review.title}
-                    </div>
-                    <div className="text-gray-200 whitespace-pre-line mb-1">
-                      {review.text}
-                    </div>
-                  </div>
+                  />
                 ))}
               </div>
             </div>
