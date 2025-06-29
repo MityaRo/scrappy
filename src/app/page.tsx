@@ -1,38 +1,31 @@
 "use client"
 
 import { useState } from "react"
+import { useDebouncedCallback } from "use-debounce"
 
 export default function Home() {
   const [appName, setAppName] = useState("")
   const [appId, setAppId] = useState("")
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{
-    results?: Array<{ appName: string; appId: string; reviews: unknown[] }>
+    appName?: string
+    appId?: string
+    reviews?: unknown[]
     error?: string
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Trigger request as soon as both fields are filled
-  async function handleInputChange(name: string, value: string) {
-    const newAppName = name === "appName" ? value : appName
-    const newAppId = name === "appId" ? value : appId
-
-    if (name === "appName") setAppName(value)
-    if (name === "appId") setAppId(value)
-
-    setError(null)
-    setResult(null)
-
-    // Only proceed if both fields have meaningful values
-    if (newAppName.trim() && newAppId.trim()) {
+  // Debounced fetch logic
+  const debouncedFetch = useDebouncedCallback(
+    async (debouncedAppName: string, debouncedAppId: string) => {
       setLoading(true)
       try {
         const res = await fetch("/api/reviews", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            appName: newAppName,
-            appId: newAppId,
+            appName: debouncedAppName,
+            appId: debouncedAppId,
             pagesCount: 1
           })
         })
@@ -44,6 +37,22 @@ export default function Home() {
       } finally {
         setLoading(false)
       }
+    },
+    500
+  )
+
+  async function handleInputChange(name: string, value: string) {
+    const newAppName = name === "appName" ? value : appName
+    const newAppId = name === "appId" ? value : appId
+
+    if (name === "appName") setAppName(value)
+    if (name === "appId") setAppId(value)
+
+    setError(null)
+    setResult(null)
+
+    if (newAppName.trim() && newAppId.trim()) {
+      debouncedFetch(newAppName.trim(), newAppId.trim())
     }
   }
 
@@ -60,10 +69,8 @@ export default function Home() {
       link.style.display = "none"
 
       // Get appName and appId from the result or current state
-      const resultsArray = Array.isArray(result.results) ? result.results : []
-      const firstResult = resultsArray[0]
-      const resultAppName = firstResult?.appName || appName
-      const resultAppId = firstResult?.appId || appId
+      const resultAppName = result.appName || appName
+      const resultAppId = result.appId || appId
 
       const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-")
       const sanitizedAppName = (resultAppName || "").replace(
