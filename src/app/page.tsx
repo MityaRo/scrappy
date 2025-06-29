@@ -6,6 +6,7 @@ import { useDebouncedCallback } from "use-debounce"
 export default function Home() {
   const [appName, setAppName] = useState("")
   const [appId, setAppId] = useState("")
+  const [reviewsCount, setReviewsCount] = useState(50)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{
     appName?: string
@@ -16,16 +17,21 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
 
   const debouncedFetch = useDebouncedCallback(
-    async (debouncedAppName: string, debouncedAppId: string) => {
+    async (
+      debouncedAppName: string,
+      debouncedAppId: string,
+      debouncedReviewsCount: number
+    ) => {
       setLoading(true)
       try {
+        const pagesCount = Math.ceil(debouncedReviewsCount / 50)
         const res = await fetch("/api/reviews", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             appName: debouncedAppName.trim(),
             appId: debouncedAppId.trim(),
-            pagesCount: 1
+            pagesCount
           })
         })
         if (!res.ok) {
@@ -46,9 +52,12 @@ export default function Home() {
   async function handleInputChange(name: string, value: string) {
     const newAppName = name === "appName" ? value : appName
     const newAppId = name === "appId" ? value : appId
+    const newReviewsCount =
+      name === "reviewsCount" ? Number(value) : reviewsCount
 
     if (name === "appName") setAppName(value)
     if (name === "appId") setAppId(value)
+    if (name === "reviewsCount") setReviewsCount(Number(value))
 
     // Add basic validation
     if (!/^\d+$/.test(newAppId.trim())) {
@@ -60,7 +69,7 @@ export default function Home() {
     setResult(null)
 
     if (newAppName.trim() && newAppId.trim()) {
-      debouncedFetch(newAppName.trim(), newAppId.trim())
+      debouncedFetch(newAppName.trim(), newAppId.trim(), newReviewsCount)
     }
   }
 
@@ -126,6 +135,18 @@ export default function Home() {
           disabled={loading}
           onChange={e => handleInputChange("appId", e.target.value)}
         />
+        <select
+          className={`border rounded px-3 py-2 ${loading ? "opacity-50" : ""}`}
+          value={reviewsCount}
+          disabled={loading}
+          onChange={e => handleInputChange("reviewsCount", e.target.value)}
+        >
+          {[100, 200, 500].map(value => (
+            <option key={value} value={value}>
+              {value} reviews
+            </option>
+          ))}
+        </select>
       </div>
       {loading && <div>Loading...</div>}
       {error && <div className="text-red-500">Error: {error}</div>}
