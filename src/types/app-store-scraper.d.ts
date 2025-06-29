@@ -13,7 +13,7 @@ declare module "app-store-scraper" {
 
   export interface ReviewsOptions {
     id: string
-    sort?: any
+    sort?: string
     page?: number
   }
 
