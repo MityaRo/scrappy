@@ -96,17 +96,19 @@ export default function Home() {
       <h1 className="text-2xl font-bold mb-4">App Store Reviews Collector</h1>
       <div className="flex flex-col gap-4 w-full max-w-md">
         <input
-          className="border rounded px-3 py-2"
+          className={`border rounded px-3 py-2 ${loading ? "opacity-50" : ""}`}
           type="text"
           placeholder="App Name"
           value={appName}
+          disabled={loading}
           onChange={e => handleInputChange("appName", e.target.value)}
         />
         <input
-          className="border rounded px-3 py-2"
+          className={`border rounded px-3 py-2 ${loading ? "opacity-50" : ""}`}
           type="text"
-          placeholder="App ID"
+          placeholder="App ID (numeric)"
           value={appId}
+          disabled={loading}
           onChange={e => handleInputChange("appId", e.target.value)}
         />
       </div>
