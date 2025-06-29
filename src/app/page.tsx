@@ -8,7 +8,7 @@ const REVIEWS_PER_PAGE = 50
 export default function Home() {
   const [appName, setAppName] = useState("")
   const [appId, setAppId] = useState("")
-  const [reviewsCount, setReviewsCount] = useState(50)
+  const [reviewsCount, setReviewsCount] = useState(100)
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{
     appName?: string
