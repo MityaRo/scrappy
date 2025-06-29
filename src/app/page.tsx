@@ -80,6 +80,17 @@ export default function Home() {
           throw new Error(`Failed to fetch reviews: ${res.status} ${errorText}`)
         }
         const data = await res.json()
+        // Deduplicate reviews by id and updated
+        if (data && Array.isArray(data.reviews)) {
+          const uniqueMap = new Map<string, Review>()
+          for (const review of data.reviews as Review[]) {
+            const key = `${review.id}-${review.updated}`
+            if (!uniqueMap.has(key)) {
+              uniqueMap.set(key, review)
+            }
+          }
+          data.reviews = Array.from(uniqueMap.values())
+        }
         setResult(data)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error")
