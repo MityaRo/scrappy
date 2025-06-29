@@ -10,7 +10,12 @@ jest.mock("app-store-scraper", () => ({
     search: jest
       .fn()
       .mockResolvedValue([
-        { appId: "123", title: "Test App", developer: "Dev" }
+        {
+          id: 123,
+          appId: "com.example.app",
+          title: "Test App",
+          developer: "Dev"
+        }
       ])
   }
 }))

@@ -18,6 +18,7 @@ declare module "app-store-scraper" {
   }
 
   export interface SearchResult {
+    id: number
     appId: string
     title: string
     developer: string
