@@ -23,7 +23,7 @@ async function collectReviewsForApp(
       store.reviews({
         id: appId,
         sort: store.sort.RECENT,
-        page: page
+        page: page + 1
       })
     )
   )
