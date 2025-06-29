@@ -2,24 +2,15 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useDebouncedCallback } from "use-debounce"
+import type { Review } from "app-store-scraper"
 
 const REVIEWS_PER_PAGE = 50
 
-interface SearchResult {
+// Define only the API response type that differs from the module
+interface SearchApiResult {
   appId: string
   appName: string
   developer: string
-}
-
-// Add Review type
-type Review = {
-  id: string
-  userName: string
-  version: string
-  score: number
-  title: string
-  text: string
-  updated: string
 }
 
 export default function Home() {
@@ -27,9 +18,9 @@ export default function Home() {
   const [appId, setAppId] = useState("")
   const [reviewsCount, setReviewsCount] = useState(100)
   const [loading, setLoading] = useState(false)
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [searchResults, setSearchResults] = useState<SearchApiResult[]>([])
   const [showDropdown, setShowDropdown] = useState(false)
-  const [selectedApp, setSelectedApp] = useState<SearchResult | null>(null)
+  const [selectedApp, setSelectedApp] = useState<SearchApiResult | null>(null)
   const [result, setResult] = useState<{
     appName?: string
     appId?: string
