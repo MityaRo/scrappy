@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { useDebouncedCallback } from "use-debounce"
 
+const REVIEWS_PER_PAGE = 50
+
 export default function Home() {
   const [appName, setAppName] = useState("")
   const [appId, setAppId] = useState("")
@@ -24,7 +26,7 @@ export default function Home() {
     ) => {
       setLoading(true)
       try {
-        const pagesCount = Math.ceil(debouncedReviewsCount / 50)
+        const pagesCount = Math.ceil(debouncedReviewsCount / REVIEWS_PER_PAGE)
         const res = await fetch("/api/reviews", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -57,7 +59,10 @@ export default function Home() {
 
     if (name === "appName") setAppName(value)
     if (name === "appId") setAppId(value)
-    if (name === "reviewsCount") setReviewsCount(Number(value))
+    if (name === "reviewsCount") {
+      const count = Number(value)
+      if (count > 0) setReviewsCount(count)
+    }
 
     // Add basic validation
     if (!/^\d+$/.test(newAppId.trim())) {
