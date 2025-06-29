@@ -15,7 +15,6 @@ export default function Home() {
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // Debounced fetch logic
   const debouncedFetch = useDebouncedCallback(
     async (debouncedAppName: string, debouncedAppId: string) => {
       setLoading(true)
@@ -24,12 +23,15 @@ export default function Home() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            appName: debouncedAppName,
-            appId: debouncedAppId,
+            appName: debouncedAppName.trim(),
+            appId: debouncedAppId.trim(),
             pagesCount: 1
           })
         })
-        if (!res.ok) throw new Error("Failed to fetch reviews")
+        if (!res.ok) {
+          const errorText = await res.text()
+          throw new Error(`Failed to fetch reviews: ${res.status} ${errorText}`)
+        }
         const data = await res.json()
         setResult(data)
       } catch (err) {
@@ -47,6 +49,12 @@ export default function Home() {
 
     if (name === "appName") setAppName(value)
     if (name === "appId") setAppId(value)
+
+    // Add basic validation
+    if (!/^\d+$/.test(newAppId.trim())) {
+      setError("App ID must be numeric")
+      return
+    }
 
     setError(null)
     setResult(null)
