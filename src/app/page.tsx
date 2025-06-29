@@ -319,77 +319,53 @@ export default function Home() {
       {result &&
         result.reviews &&
         Array.isArray(result.reviews) &&
-        result.reviews.length > 0 && (
-          <div className="w-full max-w-2xl mt-4">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="font-semibold">
-                {(() => {
-                  // Sort reviews by version (desc), then date (desc)
-                  const reviews = [...(result.reviews as Review[])]
-                  reviews.sort((a, b) => {
-                    // Compare version as string (semver-aware would be better, but string works for most)
-                    if ((a as Review).version !== (b as Review).version) {
-                      return (b as Review).version.localeCompare(
-                        (a as Review).version,
-                        undefined,
-                        {
-                          numeric: true,
-                          sensitivity: "base"
-                        }
-                      )
-                    }
-                    // Compare date (ISO string)
-                    return (
-                      new Date((b as Review).updated).getTime() -
-                      new Date((a as Review).updated).getTime()
-                    )
-                  })
-                  // Get first review date
-                  const firstReview = reviews[reviews.length - 1]
-                  const since = firstReview
-                    ? new Date(firstReview.updated)
-                    : null
-                  const sinceStr = since
-                    ? since.toLocaleString("default", {
-                        month: "long",
-                        year: "numeric"
-                      })
-                    : ""
-                  const count = reviews.length
-                  const reviewWord = count === 1 ? "review" : "reviews"
-                  return `${count} ${reviewWord} for ${
+        result.reviews.length > 0 &&
+        (() => {
+          // Sort reviews by version (desc), then date (desc) ONCE
+          const sortedReviews = [...(result.reviews as Review[])]
+          sortedReviews.sort((a, b) => {
+            if ((a as Review).version !== (b as Review).version) {
+              return (b as Review).version.localeCompare(
+                (a as Review).version,
+                undefined,
+                { numeric: true, sensitivity: "base" }
+              )
+            }
+            return (
+              new Date((b as Review).updated).getTime() -
+              new Date((a as Review).updated).getTime()
+            )
+          })
+
+          // Get first review date for heading
+          const firstReview = sortedReviews[sortedReviews.length - 1]
+          const since = firstReview ? new Date(firstReview.updated) : null
+          const sinceStr = since
+            ? since.toLocaleString("default", {
+                month: "long",
+                year: "numeric"
+              })
+            : ""
+          const count = sortedReviews.length
+          const reviewWord = count === 1 ? "review" : "reviews"
+
+          return (
+            <div className="w-full max-w-2xl mt-4">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="font-semibold">
+                  {`${count} ${reviewWord} for ${
                     result.appName || ""
-                  } since ${sinceStr}.`
-                })()}
-              </h2>
-              <button
-                onClick={downloadResults}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              >
-                Download JSON
-              </button>
-            </div>
-            <div className="flex flex-col gap-4">
-              {(() => {
-                // Sort reviews by version (desc), then date (desc)
-                const reviews = [...(result.reviews as Review[])]
-                reviews.sort((a, b) => {
-                  if ((a as Review).version !== (b as Review).version) {
-                    return (b as Review).version.localeCompare(
-                      (a as Review).version,
-                      undefined,
-                      {
-                        numeric: true,
-                        sensitivity: "base"
-                      }
-                    )
-                  }
-                  return (
-                    new Date((b as Review).updated).getTime() -
-                    new Date((a as Review).updated).getTime()
-                  )
-                })
-                return reviews.map((review, idx) => (
+                  } since ${sinceStr}.`}
+                </h2>
+                <button
+                  onClick={downloadResults}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  Download JSON
+                </button>
+              </div>
+              <div className="flex flex-col gap-4">
+                {sortedReviews.map((review, idx) => (
                   <div
                     key={`${review.id}-${review.updated}-${idx}`}
                     className="bg-gray-900 border border-gray-700 rounded p-4 text-gray-100"
@@ -432,11 +408,11 @@ export default function Home() {
                       {review.text}
                     </div>
                   </div>
-                ))
-              })()}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
     </div>
   )
 }
