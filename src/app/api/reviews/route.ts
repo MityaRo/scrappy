@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import store from "app-store-scraper"
 
-type AppInput = {
-  appName: string
-  appId: string
-}
-
 type Review = {
   id: string
   userName: string
@@ -42,14 +37,15 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const { apps, pagesCount } = body as {
-      apps: AppInput[]
+    const { appName, appId, pagesCount } = body as {
+      appName: string
+      appId: string
       pagesCount?: number
     }
 
-    if (!Array.isArray(apps)) {
+    if (!appName || !appId) {
       return NextResponse.json(
-        { error: "Invalid request body: apps must be an array" },
+        { error: "Invalid request body: appName and appId are required" },
         { status: 400 }
       )
     }
@@ -59,11 +55,9 @@ export async function POST(req: NextRequest) {
         ? pagesCount
         : defaultPagesCount
 
-    const allResults = await Promise.all(
-      apps.map(app => collectReviewsForApp(app.appId, app.appName, count))
-    )
+    const result = await collectReviewsForApp(appId, appName, count)
 
-    return NextResponse.json({ results: allResults })
+    return NextResponse.json(result)
   } catch (err) {
     return NextResponse.json(
       { error: "Failed to fetch reviews", details: err },

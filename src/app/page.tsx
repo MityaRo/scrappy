@@ -31,12 +31,8 @@ export default function Home() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            apps: [
-              {
-                appName: newAppName,
-                appId: newAppId
-              }
-            ],
+            appName: newAppName,
+            appId: newAppId,
             pagesCount: 1
           })
         })
