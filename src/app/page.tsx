@@ -1,15 +1,24 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useDebouncedCallback } from "use-debounce"
 
 const REVIEWS_PER_PAGE = 50
 
+interface SearchResult {
+  appId: string
+  appName: string
+  developer: string
+}
+
 export default function Home() {
-  const [appName, setAppName] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
   const [appId, setAppId] = useState("")
   const [reviewsCount, setReviewsCount] = useState(100)
   const [loading, setLoading] = useState(false)
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [showDropdown, setShowDropdown] = useState(false)
+  const [selectedApp, setSelectedApp] = useState<SearchResult | null>(null)
   const [result, setResult] = useState<{
     appName?: string
     appId?: string
@@ -17,6 +26,35 @@ export default function Home() {
     error?: string
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const debouncedSearch = useDebouncedCallback(async (term: string) => {
+    // Do not show dropdown if an app is already selected
+    if (selectedApp) {
+      setShowDropdown(false)
+      setSearchResults([])
+      return
+    }
+    if (term.length < 3) {
+      setSearchResults([])
+      setShowDropdown(false)
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(term)}`)
+      if (!res.ok) {
+        throw new Error(`Search failed: ${res.status}`)
+      }
+      const data = await res.json()
+      setSearchResults(data)
+      setShowDropdown(data.length > 0)
+    } catch (err) {
+      console.error("Search error:", err)
+      setSearchResults([])
+      setShowDropdown(false)
+    }
+  }, 500)
 
   const debouncedFetch = useDebouncedCallback(
     async (
@@ -51,31 +89,58 @@ export default function Home() {
     500
   )
 
-  async function handleInputChange(name: string, value: string) {
-    const newAppName = name === "appName" ? value : appName
-    const newAppId = name === "appId" ? value : appId
-    const newReviewsCount =
-      name === "reviewsCount" ? Number(value) : reviewsCount
-
-    if (name === "appName") setAppName(value)
-    if (name === "appId") setAppId(value)
-    if (name === "reviewsCount") {
-      const count = Number(value)
-      if (count > 0) setReviewsCount(count)
+  // Handle click outside dropdown to close it
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false)
+      }
     }
 
-    // Add basic validation
-    if (!/^\d+$/.test(newAppId.trim())) {
-      setError("App ID must be numeric")
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
+  async function handleSearchChange(value: string) {
+    setSearchTerm(value)
+
+    // If an app is already selected and the value matches the selected app name,
+    // don't trigger search and keep dropdown hidden
+    if (selectedApp && value === selectedApp.appName) {
+      setShowDropdown(false)
+      setSearchResults([])
+      return
+    }
+
+    // If value doesn't match selected app, clear the selection
+    if (selectedApp && value !== selectedApp.appName) {
+      setSelectedApp(null)
+      setAppId("")
+      setResult(null)
+      setError(null)
+    }
+
+    if (value.length >= 3) {
+      debouncedSearch(value)
+    } else {
+      setSearchResults([])
+      setShowDropdown(false)
+    }
+  }
+
+  function handleGetReviews() {
+    if (!selectedApp || !appId) {
+      setError("Please select an app first")
       return
     }
 
     setError(null)
-    setResult(null)
-
-    if (newAppName.trim() && newAppId.trim()) {
-      debouncedFetch(newAppName.trim(), newAppId.trim(), newReviewsCount)
-    }
+    debouncedFetch(selectedApp.appName, appId, reviewsCount)
   }
 
   function downloadResults() {
@@ -91,7 +156,7 @@ export default function Home() {
       link.style.display = "none"
 
       // Get appName and appId from the result or current state
-      const resultAppName = result.appName || appName
+      const resultAppName = result.appName || selectedApp?.appName || ""
       const resultAppId = result.appId || appId
 
       const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-")
@@ -124,27 +189,46 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center min-h-screen p-8 gap-8">
       <h1 className="text-2xl font-bold mb-4">App Store Reviews Collector</h1>
       <div className="flex flex-col gap-4 w-full max-w-md">
-        <input
-          className={`border rounded px-3 py-2 ${loading ? "opacity-50" : ""}`}
-          type="text"
-          placeholder="App Name"
-          value={appName}
-          disabled={loading}
-          onChange={e => handleInputChange("appName", e.target.value)}
-        />
-        <input
-          className={`border rounded px-3 py-2 ${loading ? "opacity-50" : ""}`}
-          type="text"
-          placeholder="App ID (numeric)"
-          value={appId}
-          disabled={loading}
-          onChange={e => handleInputChange("appId", e.target.value)}
-        />
+        <div className="relative" ref={dropdownRef}>
+          <input
+            className={`border rounded px-3 py-2 w-full ${
+              loading ? "opacity-50" : ""
+            }`}
+            type="text"
+            placeholder="Search for an app (e.g., 'Instagram', 'TikTok', 'WhatsApp')"
+            value={searchTerm}
+            disabled={loading}
+            onChange={e => handleSearchChange(e.target.value)}
+          />
+          {!selectedApp && showDropdown && searchResults.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-gray-900 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
+              {searchResults.map(app => (
+                <div
+                  key={app.appId}
+                  className="px-3 py-2 hover:bg-gray-800 cursor-pointer border-b border-gray-800 last:border-b-0 text-gray-100"
+                  onClick={() => {
+                    setSelectedApp(app)
+                    setSearchTerm(app.appName)
+                    setAppId(app.appId)
+                    setShowDropdown(false)
+                    setSearchResults([])
+                    setResult(null)
+                    setError(null)
+                  }}
+                >
+                  <div className="font-medium text-gray-100">{app.appName}</div>
+                  <div className="text-sm text-gray-400">{app.developer}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <select
           className={`border rounded px-3 py-2 ${loading ? "opacity-50" : ""}`}
           value={reviewsCount}
           disabled={loading}
-          onChange={e => handleInputChange("reviewsCount", e.target.value)}
+          onChange={e => setReviewsCount(Number(e.target.value))}
         >
           {[100, 200, 500].map(value => (
             <option key={value} value={value}>
@@ -152,9 +236,20 @@ export default function Home() {
             </option>
           ))}
         </select>
+
+        <button
+          className={`bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed ${
+            loading ? "opacity-50" : ""
+          }`}
+          onClick={handleGetReviews}
+          disabled={loading || !selectedApp}
+        >
+          {loading ? "Loading..." : "Get Reviews"}
+        </button>
       </div>
-      {loading && <div>Loading...</div>}
+
       {error && <div className="text-red-500">Error: {error}</div>}
+
       {result && (
         <div className="w-full max-w-2xl mt-4">
           <div className="flex justify-between items-center mb-2">

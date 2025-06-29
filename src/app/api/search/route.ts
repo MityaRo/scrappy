@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
       country: "us"
     })
     const mapped = results.map((app: SearchResult) => ({
-      appId: app.appId,
+      appId: app.id.toString(),
       appName: app.title,
       developer: app.developer
     }))
