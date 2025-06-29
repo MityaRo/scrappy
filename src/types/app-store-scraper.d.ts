@@ -17,10 +17,23 @@ declare module "app-store-scraper" {
     page?: number
   }
 
+  export interface SearchResult {
+    appId: string
+    title: string
+    developer: string
+    // Add more fields as needed
+  }
+
   export function reviews(options: ReviewsOptions): Promise<Review[]>
+  export function search(options: {
+    term: string
+    num?: number
+    country?: string
+  }): Promise<SearchResult[]>
 
   const store: {
     reviews: typeof reviews
+    search: typeof search
     sort: {
       RECENT: string
       // Add other sort options if needed
