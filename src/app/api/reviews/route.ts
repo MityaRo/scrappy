@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server"
-// @ts-expect-error: No type definitions for 'app-store-scraper'
 import store from "app-store-scraper"
 
 type AppInput = {
