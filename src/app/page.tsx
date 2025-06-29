@@ -11,6 +11,17 @@ interface SearchResult {
   developer: string
 }
 
+// Add Review type
+type Review = {
+  id: string
+  userName: string
+  version: string
+  score: number
+  title: string
+  text: string
+  updated: string
+}
+
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("")
   const [appId, setAppId] = useState("")
@@ -305,22 +316,127 @@ export default function Home() {
 
       {error && <div className="text-red-500">Error: {error}</div>}
 
-      {result && (
-        <div className="w-full max-w-2xl mt-4">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="font-semibold">Results:</h2>
-            <button
-              onClick={downloadResults}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            >
-              Download JSON
-            </button>
+      {result &&
+        result.reviews &&
+        Array.isArray(result.reviews) &&
+        result.reviews.length > 0 && (
+          <div className="w-full max-w-2xl mt-4">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="font-semibold">
+                {(() => {
+                  // Sort reviews by version (desc), then date (desc)
+                  const reviews = [...(result.reviews as Review[])]
+                  reviews.sort((a, b) => {
+                    // Compare version as string (semver-aware would be better, but string works for most)
+                    if ((a as Review).version !== (b as Review).version) {
+                      return (b as Review).version.localeCompare(
+                        (a as Review).version,
+                        undefined,
+                        {
+                          numeric: true,
+                          sensitivity: "base"
+                        }
+                      )
+                    }
+                    // Compare date (ISO string)
+                    return (
+                      new Date((b as Review).updated).getTime() -
+                      new Date((a as Review).updated).getTime()
+                    )
+                  })
+                  // Get first review date
+                  const firstReview = reviews[reviews.length - 1]
+                  const since = firstReview
+                    ? new Date(firstReview.updated)
+                    : null
+                  const sinceStr = since
+                    ? since.toLocaleString("default", {
+                        month: "long",
+                        year: "numeric"
+                      })
+                    : ""
+                  const count = reviews.length
+                  const reviewWord = count === 1 ? "review" : "reviews"
+                  return `${count} ${reviewWord} for ${
+                    result.appName || ""
+                  } since ${sinceStr}.`
+                })()}
+              </h2>
+              <button
+                onClick={downloadResults}
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              >
+                Download JSON
+              </button>
+            </div>
+            <div className="flex flex-col gap-4">
+              {(() => {
+                // Sort reviews by version (desc), then date (desc)
+                const reviews = [...(result.reviews as Review[])]
+                reviews.sort((a, b) => {
+                  if ((a as Review).version !== (b as Review).version) {
+                    return (b as Review).version.localeCompare(
+                      (a as Review).version,
+                      undefined,
+                      {
+                        numeric: true,
+                        sensitivity: "base"
+                      }
+                    )
+                  }
+                  return (
+                    new Date((b as Review).updated).getTime() -
+                    new Date((a as Review).updated).getTime()
+                  )
+                })
+                return reviews.map((review, idx) => (
+                  <div
+                    key={`${review.id}-${review.updated}-${idx}`}
+                    className="bg-gray-900 border border-gray-700 rounded p-4 text-gray-100"
+                  >
+                    <div className="flex flex-wrap gap-4 items-center mb-2">
+                      <span className="font-bold text-blue-400">
+                        v{review.version}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        {Array.from({ length: 5 }).map((_, i) => {
+                          let color = "text-gray-700"
+                          if (review.score >= 5) color = "text-yellow-400"
+                          else if (review.score === 4) color = "text-orange-400"
+                          else if (review.score === 3) color = "text-yellow-300"
+                          else if (review.score === 2) color = "text-gray-400"
+                          else if (review.score === 1) color = "text-gray-600"
+                          return (
+                            <span
+                              key={i}
+                              className={
+                                i < review.score ? color : "text-gray-800"
+                              }
+                            >
+                              ★
+                            </span>
+                          )
+                        })}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {new Date(review.updated).toLocaleDateString()}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        by {review.userName}
+                      </span>
+                    </div>
+                    <div className="font-semibold text-lg mb-1">
+                      {review.title}
+                    </div>
+                    <div className="text-gray-200 whitespace-pre-line mb-1">
+                      {review.text}
+                    </div>
+                  </div>
+                ))
+              })()}
+            </div>
           </div>
-          <pre className="bg-gray-100 p-2 rounded overflow-x-auto text-xs text-gray-900">
-            {JSON.stringify(result, null, 2)}
-          </pre>
-        </div>
-      )}
+        )}
     </div>
   )
 }
