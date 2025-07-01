@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <Script
-        src="https://www.googletagmanager.com/gtag/js?id=G-4B6RLPE3CX"
+        src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_TRACKING_ID}`}
         strategy="afterInteractive"
       />
       <Script id="gtag-init" strategy="afterInteractive">
