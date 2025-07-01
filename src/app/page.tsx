@@ -138,31 +138,30 @@ function HomeContent() {
 
   // --- URL PARAM SYNC ---
   // On mount, read params and set state
+  // Only run on mount to read initial URL params
   useEffect(() => {
-    const urlApp = searchParams!.get("app") || ""
-    const urlAppId = searchParams!.get("appId") || ""
+    const urlApp = (searchParams && searchParams.get("app")) || ""
+    const urlAppId = (searchParams && searchParams.get("appId")) || ""
     const urlReviewsCount = parseInt(
-      searchParams!.get("reviewsCount") || "100",
+      (searchParams && searchParams.get("reviewsCount")) || "100",
       10
     )
     if (urlApp && urlAppId) {
+      const validReviewsCount = [100, 200, 500].includes(urlReviewsCount)
+        ? urlReviewsCount
+        : 100
       setSearchTerm(urlApp)
       setAppId(urlAppId)
-      setSelectedApp({ appId: urlAppId, appName: urlApp, developer: "" })
-      setReviewsCount(
-        [100, 200, 500].includes(urlReviewsCount) ? urlReviewsCount : 100
-      )
+      setSelectedApp({ appId: urlAppId, appName: urlApp, developer: "Unknown" })
+      setReviewsCount(validReviewsCount)
       // Only auto-fetch if both present
-      debouncedFetch(
-        urlApp,
-        urlAppId,
-        [100, 200, 500].includes(urlReviewsCount) ? urlReviewsCount : 100
-      )
+      debouncedFetch(urlApp, urlAppId, validReviewsCount)
     } else if (urlApp && !urlAppId) {
       setSearchTerm(urlApp)
       debouncedSearch(urlApp)
     }
-  }, [debouncedFetch, debouncedSearch, searchParams])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedFetch, debouncedSearch])
 
   // Debounced URL update
   const debouncedUpdateUrl = useDebouncedCallback(
