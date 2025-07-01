@@ -16,7 +16,7 @@ interface SearchApiResult {
   developer: string
 }
 
-export default function Home() {
+function HomeContent() {
   const [searchTerm, setSearchTerm] = useState("")
   const [appId, setAppId] = useState("")
   const [reviewsCount, setReviewsCount] = useState(100)
@@ -319,130 +319,132 @@ export default function Home() {
   }
 
   return (
-    <Suspense>
-      <div className="flex flex-col items-center justify-center min-h-screen p-8 gap-8">
-        <h1 className="text-2xl font-bold mb-4">App Store Reviews Collector</h1>
-        <div className="flex flex-col gap-4 w-full max-w-md">
-          <div className="relative" ref={dropdownRef}>
-            <input
-              className={`border rounded px-3 py-2 w-full ${
-                loading ? "opacity-50" : ""
-              }`}
-              type="text"
-              placeholder="Search for an app (e.g., 'Instagram', 'TikTok', 'WhatsApp')"
-              value={searchTerm}
-              disabled={loading}
-              onChange={e => handleSearchChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-            {!selectedApp && showDropdown && searchResults.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-gray-900 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                {searchResults.map((app, idx) => (
-                  <div
-                    key={app.appId}
-                    className={`px-3 py-2 cursor-pointer border-b border-gray-800 last:border-b-0 text-gray-100 ${
-                      idx === highlightedIndex
-                        ? "bg-blue-600"
-                        : "hover:bg-gray-800"
-                    }`}
-                    onMouseEnter={() => setHighlightedIndex(idx)}
-                    onMouseDown={e => {
-                      // Prevent input blur before click
-                      e.preventDefault()
-                      setSelectedApp(app)
-                      setSearchTerm(app.appName)
-                      setAppId(app.appId)
-                      setShowDropdown(false)
-                      setSearchResults([])
-                      setResult(null)
-                      setError(null)
-                      setHighlightedIndex(-1)
-                    }}
-                  >
-                    <div className="font-medium text-gray-100">
-                      {app.appName}
-                    </div>
-                    <div className="text-sm text-gray-400">{app.developer}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <select
-            className={`border rounded px-3 py-2 ${
+    <div className="flex flex-col items-center justify-center min-h-screen p-8 gap-8">
+      <h1 className="text-2xl font-bold mb-4">App Store Reviews Collector</h1>
+      <div className="flex flex-col gap-4 w-full max-w-md">
+        <div className="relative" ref={dropdownRef}>
+          <input
+            className={`border rounded px-3 py-2 w-full ${
               loading ? "opacity-50" : ""
             }`}
-            value={reviewsCount}
+            type="text"
+            placeholder="Search for an app (e.g., 'Instagram', 'TikTok', 'WhatsApp')"
+            value={searchTerm}
             disabled={loading}
-            onChange={e => setReviewsCount(Number(e.target.value))}
-          >
-            {[100, 200, 500].map(value => (
-              <option key={value} value={value}>
-                {value} reviews
-              </option>
-            ))}
-          </select>
-
-          <button
-            className={`bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed ${
-              loading ? "opacity-50" : ""
-            }`}
-            onClick={handleGetReviews}
-            disabled={loading || !selectedApp}
-          >
-            {loading ? "Loading..." : "Get Reviews"}
-          </button>
+            onChange={e => handleSearchChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          {!selectedApp && showDropdown && searchResults.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-gray-900 border border-gray-700 rounded-md shadow-lg max-h-60 overflow-y-auto">
+              {searchResults.map((app, idx) => (
+                <div
+                  key={app.appId}
+                  className={`px-3 py-2 cursor-pointer border-b border-gray-800 last:border-b-0 text-gray-100 ${
+                    idx === highlightedIndex
+                      ? "bg-blue-600"
+                      : "hover:bg-gray-800"
+                  }`}
+                  onMouseEnter={() => setHighlightedIndex(idx)}
+                  onMouseDown={e => {
+                    // Prevent input blur before click
+                    e.preventDefault()
+                    setSelectedApp(app)
+                    setSearchTerm(app.appName)
+                    setAppId(app.appId)
+                    setShowDropdown(false)
+                    setSearchResults([])
+                    setResult(null)
+                    setError(null)
+                    setHighlightedIndex(-1)
+                  }}
+                >
+                  <div className="font-medium text-gray-100">{app.appName}</div>
+                  <div className="text-sm text-gray-400">{app.developer}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {error && <div className="text-red-500">Error: {error}</div>}
+        <select
+          className={`border rounded px-3 py-2 ${loading ? "opacity-50" : ""}`}
+          value={reviewsCount}
+          disabled={loading}
+          onChange={e => setReviewsCount(Number(e.target.value))}
+        >
+          {[100, 200, 500].map(value => (
+            <option key={value} value={value}>
+              {value} reviews
+            </option>
+          ))}
+        </select>
 
-        {result &&
-          result.reviews &&
-          Array.isArray(result.reviews) &&
-          result.reviews.length > 0 &&
-          (() => {
-            const sortedReviews = sortReviews(result.reviews as Review[])
-
-            // Get first review date for heading
-            const firstReview = sortedReviews[sortedReviews.length - 1]
-            const since = firstReview ? new Date(firstReview.updated) : null
-            const sinceStr = since
-              ? since.toLocaleString("default", {
-                  month: "long",
-                  year: "numeric"
-                })
-              : ""
-            const count = sortedReviews.length
-            const reviewWord = count === 1 ? "review" : "reviews"
-
-            return (
-              <div className="w-full max-w-2xl mt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h2 className="font-semibold">
-                    {`${count} ${reviewWord} for ${
-                      result.appName || ""
-                    } since ${sinceStr}.`}
-                  </h2>
-                  <button
-                    onClick={downloadResults}
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                  >
-                    Download JSON
-                  </button>
-                </div>
-                <div className="flex flex-col gap-4">
-                  {sortedReviews.map((review, idx) => (
-                    <ReviewCard
-                      review={review}
-                      key={`${review.id}-${review.updated}-${idx}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            )
-          })()}
+        <button
+          className={`bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed ${
+            loading ? "opacity-50" : ""
+          }`}
+          onClick={handleGetReviews}
+          disabled={loading || !selectedApp}
+        >
+          {loading ? "Loading..." : "Get Reviews"}
+        </button>
       </div>
+
+      {error && <div className="text-red-500">Error: {error}</div>}
+
+      {result &&
+        result.reviews &&
+        Array.isArray(result.reviews) &&
+        result.reviews.length > 0 &&
+        (() => {
+          const sortedReviews = sortReviews(result.reviews as Review[])
+
+          // Get first review date for heading
+          const firstReview = sortedReviews[sortedReviews.length - 1]
+          const since = firstReview ? new Date(firstReview.updated) : null
+          const sinceStr = since
+            ? since.toLocaleString("default", {
+                month: "long",
+                year: "numeric"
+              })
+            : ""
+          const count = sortedReviews.length
+          const reviewWord = count === 1 ? "review" : "reviews"
+
+          return (
+            <div className="w-full max-w-2xl mt-4">
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="font-semibold">
+                  {`${count} ${reviewWord} for ${
+                    result.appName || ""
+                  } since ${sinceStr}.`}
+                </h2>
+                <button
+                  onClick={downloadResults}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  Download JSON
+                </button>
+              </div>
+              <div className="flex flex-col gap-4">
+                {sortedReviews.map((review, idx) => (
+                  <ReviewCard
+                    review={review}
+                    key={`${review.id}-${review.updated}-${idx}`}
+                  />
+                ))}
+              </div>
+            </div>
+          )
+        })()}
+    </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense>
+      <HomeContent />
     </Suspense>
   )
 }
