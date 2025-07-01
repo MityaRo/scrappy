@@ -158,8 +158,11 @@ export default function Home() {
         urlAppId,
         [100, 200, 500].includes(urlReviewsCount) ? urlReviewsCount : 100
       )
+    } else if (urlApp && !urlAppId) {
+      setSearchTerm(urlApp)
+      debouncedSearch(urlApp)
     }
-  }, [debouncedFetch, searchParams])
+  }, [debouncedFetch, debouncedSearch, searchParams])
 
   // Debounced URL update
   const debouncedUpdateUrl = useDebouncedCallback(
