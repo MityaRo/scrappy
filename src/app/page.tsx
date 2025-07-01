@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { useDebouncedCallback } from "use-debounce"
 import type { Review } from "app-store-scraper"
 import ReviewCard from "./components/ReviewCard"
+import { useRouter, useSearchParams } from "next/navigation"
 
 const REVIEWS_PER_PAGE = 50
 
@@ -31,6 +32,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1)
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   const debouncedSearch = useDebouncedCallback(async (term: string) => {
     // Do not show dropdown if an app is already selected
@@ -132,22 +135,63 @@ export default function Home() {
     return value.length >= 3
   }
 
+  // --- URL PARAM SYNC ---
+  // On mount, read params and set state
+  useEffect(() => {
+    const urlApp = searchParams!.get("app") || ""
+    const urlAppId = searchParams!.get("appId") || ""
+    const urlReviewsCount = parseInt(
+      searchParams!.get("reviewsCount") || "100",
+      10
+    )
+    if (urlApp && urlAppId) {
+      setSearchTerm(urlApp)
+      setAppId(urlAppId)
+      setSelectedApp({ appId: urlAppId, appName: urlApp, developer: "" })
+      setReviewsCount(
+        [100, 200, 500].includes(urlReviewsCount) ? urlReviewsCount : 100
+      )
+      // Only auto-fetch if both present
+      debouncedFetch(
+        urlApp,
+        urlAppId,
+        [100, 200, 500].includes(urlReviewsCount) ? urlReviewsCount : 100
+      )
+    }
+  }, [debouncedFetch, searchParams])
+
+  // Debounced URL update
+  const debouncedUpdateUrl = useDebouncedCallback(
+    (appName: string, appId: string, reviewsCount: number) => {
+      const params = new URLSearchParams()
+      if (appName) params.set("app", appName)
+      if (appId) params.set("appId", appId)
+      if (reviewsCount) params.set("reviewsCount", reviewsCount.toString())
+      const qs = params.toString()
+      router.replace(qs ? `?${qs}` : "", { scroll: false })
+    },
+    300
+  )
+
+  // When selectedApp or reviewsCount changes, update URL
+  useEffect(() => {
+    if (selectedApp && appId) {
+      debouncedUpdateUrl(selectedApp.appName, appId, reviewsCount)
+    }
+  }, [selectedApp, appId, reviewsCount, debouncedUpdateUrl])
+
   async function handleSearchChange(value: string) {
     setSearchTerm(value)
-
-    // If an app is already selected and the value matches the selected app name,
-    // don't trigger search and keep dropdown hidden
     if (selectedApp && value === selectedApp.appName) {
       setShowDropdown(false)
       setSearchResults([])
       return
     }
-
-    // If value doesn't match selected app, clear the selection
     if (selectedApp && value !== selectedApp.appName) {
       clearSelectedApp()
+      // Clear URL params
+      router.replace("", { scroll: false })
     }
-
     if (shouldTriggerSearch(value)) {
       debouncedSearch(value)
     } else {
