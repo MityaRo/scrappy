@@ -228,7 +228,7 @@ function HomeContent() {
       // Get appName and appId from the result or current state
       const resultAppName = result.appName || selectedApp?.appName || ""
       const resultAppId = result.appId || appId
-
+      
       const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-")
       const sanitizedAppName = (resultAppName || "").replace(
         /[^a-zA-Z0-9]/g,
