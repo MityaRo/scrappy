@@ -327,7 +327,7 @@ function HomeContent() {
               loading ? "opacity-50" : ""
             }`}
             type="text"
-            placeholder="Search for an app (e.g., 'Instagram', 'TikTok', 'WhatsApp')"
+            placeholder="Search for an app (e.g., 'Instagram')"
             value={searchTerm}
             disabled={loading}
             onChange={e => handleSearchChange(e.target.value)}
