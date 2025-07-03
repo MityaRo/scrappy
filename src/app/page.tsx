@@ -228,7 +228,7 @@ function HomeContent() {
       // Get appName and appId from the result or current state
       const resultAppName = result.appName || selectedApp?.appName || ""
       const resultAppId = result.appId || appId
-      
+
       const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-")
       const sanitizedAppName = (resultAppName || "").replace(
         /[^a-zA-Z0-9]/g,
@@ -365,18 +365,36 @@ function HomeContent() {
           )}
         </div>
 
-        <select
-          className={`border rounded px-3 py-2 ${loading ? "opacity-50" : ""}`}
-          value={reviewsCount}
-          disabled={loading}
-          onChange={e => setReviewsCount(Number(e.target.value))}
-        >
-          {[100, 200, 500].map(value => (
-            <option key={value} value={value}>
-              {value} reviews
-            </option>
-          ))}
-        </select>
+        <div className="relative w-full">
+          <select
+            className={`border rounded px-3 py-2 pr-10 appearance-none w-full ${
+              loading ? "opacity-50" : ""
+            }`}
+            value={reviewsCount}
+            disabled={loading}
+            onChange={e => setReviewsCount(Number(e.target.value))}
+          >
+            {[100, 200, 500].map(value => (
+              <option key={value} value={value}>
+                {value} reviews
+              </option>
+            ))}
+          </select>
+          <svg
+            className="pointer-events-none absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </div>
 
         <button
           className={`bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed ${
